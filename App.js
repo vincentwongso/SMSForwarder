@@ -75,12 +75,23 @@ export default class App extends Component<Props> {
     }
   };
 
+  isValidMessage = message => {
+    if (message.originatingAddress === this.state.phoneNo) {
+      const patt = new RegExp(this.state.message, 'gi');
+      if (patt.test(message.body)) {
+        return true;
+      }
+    }
+    return false;
+  };
+
   saveForwarder = () => {
     console.log('Saving Forwarder');
     Alert.alert('Notification', 'Forwarder is now enabled!');
     const subscription = SmsListener.addListener(message => {
-      console.log(message);
-      this.sendEmail(message, this.state.email);
+      if (isValidMessage(message)) {
+        this.sendEmail(message, this.state.email);
+      }
     });
     this.setState({ subscription });
   };
@@ -107,7 +118,7 @@ export default class App extends Component<Props> {
         <Text style={styles.filter}>Filter SMS By</Text>
         <FormInput
           placeholder="Phone No"
-          label="Phone No"
+          label="Phone No (Int'l Format, eg: +6141234567)"
           onChangeText={phoneNo => this.setState({ phoneNo })}
           value={phoneNo}
         />
