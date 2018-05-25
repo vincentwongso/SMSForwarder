@@ -79,10 +79,9 @@ export default class App extends Component {
   };
 
   saveForwarder = () => {
-    console.log('Saving Forwarder');
     Alert.alert('Notification', 'Forwarder is now enabled!');
     const subscription = SmsListener.addListener(message => {
-      if (isValidMessage(message)) {
+      if (this.isValidMessage(message)) {
         this.sendEmail(message, this.state.email);
       }
     });
