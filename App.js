@@ -1,186 +1,55 @@
-import React, { Component } from 'react';
-import {
-  Platform,
-  StyleSheet,
-  Text,
-  View,
-  PermissionsAndroid,
-  Alert,
-} from 'react-native';
-import SmsListener from 'react-native-android-sms-listener';
-import { FormLabel, FormInput, Input, Button } from 'react-native-elements';
-
-const instructions = Platform.select({
-  ios: 'Press Cmd+R to reload,\n' + 'Cmd+D or shake for dev menu',
-  android: 'Double tap R on your keyboard to reload,\n' +
-    'Shake or press menu button for dev menu',
-});
-
-export default class App extends Component {
-  state = {
-    phoneNo: '+61422051426',
-    message: '',
-    email: '',
-    subscription: null,
-  };
-  async componentDidMount() {
-    try {
-      const granted = await PermissionsAndroid.request(
-        PermissionsAndroid.PERMISSIONS.RECEIVE_SMS,
-        {
-          title: 'SMS Forwarder',
-          message: 'SMS Forwarder needs access to read your sms.',
-        }
-      );
-      if (granted === PermissionsAndroid.RESULTS.GRANTED) {
-        console.log('Permission granted');
-      } else {
-        console.log('Permission denied');
-      }
-    } catch (err) {
-      console.warn(err);
-    }
-  }
-
-  sendEmail = async (message, destinationEmail) => {
-    const url = 'https://frozen-falls-13030.herokuapp.com/mail';
-    const headers = new Headers({
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-      'User-Agent': 'Mozilla/5.0 (iPhone; CPU iPhone OS 11_2_6 like Mac OS X) AppleWebKit/604.5.6 (KHTML, like Gecko) Mobile/15D100',
-    });
-    const config = {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({
-        subject: `Forwarding SMS From: ${message.originatingAddress}`,
-        body: message.body,
-        destination: destinationEmail,
-      }),
-    };
-    try {
-      const response = await fetch(url, config);
-      const result = await response.json();
-      console.log(result);
-    } catch (e) {
-      console.error(e);
-      Alert.alert('Notification', 'Failed delivering sms!');
-    }
-  };
-
-  isValidMessage = message => {
-    if (message.originatingAddress === this.state.phoneNo) {
-      const patt = new RegExp(this.state.message, 'gi');
-      if (patt.test(message.body)) {
-        return true;
-      }
-    }
-    return false;
-  };
-
-  saveForwarder = () => {
-    Alert.alert('Notification', 'Forwarder is now enabled!');
-    const subscription = SmsListener.addListener(message => {
-      if (this.isValidMessage(message)) {
-        this.sendEmail(message, this.state.email);
-      }
-    });
-    this.setState({ subscription });
-  };
-
-  stopForwarding = () => {
-    console.log('Stop forwarding');
-    Alert.alert('Notification', 'Forwarder is now stopped!');
-    if (this.state.subscription) {
-      this.state.subscription.remove();
-    }
-    this.setState({
-      subscription: null,
-    });
-  };
-
-  render() {
-    const { phoneNo, message, email, subscription } = this.state;
-    return (
-      <View style={styles.container}>
-        <Text style={styles.welcome}>
-          Welcome to SMS Forwarder!
-        </Text>
-        <Text>Forwarder {subscription !== null ? 'ON' : 'OFF'}</Text>
-        <Text style={styles.filter}>Filter SMS By</Text>
-        <FormInput
-          placeholder="Phone No"
-          label="Phone No (Int'l Format, eg: +6141234567)"
-          onChangeText={phoneNo => this.setState({ phoneNo })}
-          value={phoneNo}
-        />
-        <FormInput
-          placeholder="Message Contains"
-          label="Message Contains"
-          onChangeText={message => this.setState({ message })}
-          value={message}
-        />
-        <Text style={styles.filter}>Destination Email</Text>
-        <FormInput
-          placeholder="Email"
-          label="Email"
-          onChangeText={email => this.setState({ email })}
-          value={email}
-        />
-        <View style={styles.buttonsContainer}>
-          {!subscription &&
-            <Button
-              raised
-              title="SAVE FORWARDER"
-              buttonStyle={{
-                backgroundColor: 'rgba(111, 202, 186, 1)',
-              }}
-              onPress={this.saveForwarder}
-            />}
-          {subscription &&
-            <Button
-              raised
-              title="STOP FORWARDER"
-              buttonStyle={{
-                backgroundColor: 'rgba(92, 99,216, 1)',
-              }}
-              onPress={this.stopForwarding}
-            />}
-        </View>
-      </View>
-    );
-  }
-}
+import React from 'react';
+import { StyleSheet } from 'react-native';
+import AppIntroSlider from 'react-native-app-intro-slider';
+import SMSForwarder from './SMSForwarder';
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F5FCFF',
-  },
-  welcome: {
-    fontSize: 20,
-    textAlign: 'center',
-    margin: 10,
-  },
-  instructions: {
-    textAlign: 'center',
-    color: '#333333',
-    marginBottom: 5,
-  },
-  filter: {
-    textAlign: 'left',
-    margin: 10,
-    fontWeight: 'bold',
-  },
-  phoneNoLabel: {
-    textAlign: 'left',
-  },
-  buttonsContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    width: '100%',
-    marginTop: 20,
+  image: {
+    width: 320,
+    height: 320,
   },
 });
+
+const slides = [
+  {
+    key: 'somethun',
+    title: 'Title 1',
+    text: 'Description.\nSay something cool',
+    image: require('./assets/1.jpg'),
+    imageStyle: styles.image,
+    backgroundColor: '#59b2ab',
+  },
+  {
+    key: 'somethun-dos',
+    title: 'Title 2',
+    text: 'Other cool stuff',
+    image: require('./assets/2.jpg'),
+    imageStyle: styles.image,
+    backgroundColor: '#febe29',
+  },
+  {
+    key: 'somethun1',
+    title: 'Rocket guy',
+    text: "I'm already out of descriptions\n\nLorem ipsum bla bla bla",
+    image: require('./assets/3.jpg'),
+    imageStyle: styles.image,
+    backgroundColor: '#22bcb5',
+  },
+];
+
+export default class App extends React.Component {
+  state = {
+    welcomeScreenFinished: false,
+  };
+  _onDone = () => {
+    this.setState({
+      welcomeScreenFinished: true,
+    });
+  };
+  render() {
+    if (!this.state.welcomeScreenFinished) {
+      return <AppIntroSlider slides={slides} onDone={this._onDone} />;
+    }
+    return <SMSForwarder />;
+  }
+}
