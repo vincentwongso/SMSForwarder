@@ -68,6 +68,7 @@ export default class SMSForwarder extends Component {
       this.state.phoneNo === ''
     ) {
       const patt = new RegExp(this.state.message, 'gi');
+      console.log('valid message 1');
       if (patt.test(message.body) || this.state.message === '') {
         return true;
       }

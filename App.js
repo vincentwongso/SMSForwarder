@@ -36,11 +36,13 @@ export default class App extends React.Component {
 
   async componendDidMount() {
     try {
-      const value = await AsyncStorage.getItem('@SMSForwarder:welcomeScreenDone');
-      if (value !== null && value){
+      const value = await AsyncStorage.getItem(
+        '@SMSForwarder:welcomeScreenDone'
+      );
+      if (value !== null && value === 'true') {
         this.setState({
-          welcomeScreenFinished: true
-        })
+          welcomeScreenFinished: true,
+        });
       }
     } catch (error) {
       // Error saving data
@@ -49,7 +51,7 @@ export default class App extends React.Component {
 
   _onDone = () => {
     try {
-      await AsyncStorage.setItem('@SMSForwarder:welcomeScreenDone', true);
+      AsyncStorage.setItem('@SMSForwarder:welcomeScreenDone', 'true');
     } catch (error) {
       // Error saving data
     }
