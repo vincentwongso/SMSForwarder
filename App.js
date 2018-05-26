@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet } from 'react-native';
+import { StyleSheet, AsyncStorage } from 'react-native';
 import AppIntroSlider from 'react-native-app-intro-slider';
 import SMSForwarder from './SMSForwarder';
 
@@ -12,28 +12,20 @@ const styles = StyleSheet.create({
 
 const slides = [
   {
-    key: 'somethun',
-    title: 'Title 1',
-    text: 'Description.\nSay something cool',
+    key: 'FirstPage',
+    title: 'SMS Forwarder',
+    text: 'Welcome to SMS Forwarder.\nForward your SMS to your email.',
     image: require('./assets/1.jpg'),
     imageStyle: styles.image,
     backgroundColor: '#59b2ab',
   },
   {
     key: 'somethun-dos',
-    title: 'Title 2',
-    text: 'Other cool stuff',
+    title: 'HOW IT WORKS',
+    text: 'Simply specify your destination email and your filter (origination phone no and message) that you want to forward. Then click save and keep the app open.',
     image: require('./assets/2.jpg'),
     imageStyle: styles.image,
     backgroundColor: '#febe29',
-  },
-  {
-    key: 'somethun1',
-    title: 'Rocket guy',
-    text: "I'm already out of descriptions\n\nLorem ipsum bla bla bla",
-    image: require('./assets/3.jpg'),
-    imageStyle: styles.image,
-    backgroundColor: '#22bcb5',
   },
 ];
 
@@ -41,7 +33,26 @@ export default class App extends React.Component {
   state = {
     welcomeScreenFinished: false,
   };
+
+  async componendDidMount() {
+    try {
+      const value = await AsyncStorage.getItem('@SMSForwarder:welcomeScreenDone');
+      if (value !== null && value){
+        this.setState({
+          welcomeScreenFinished: true
+        })
+      }
+    } catch (error) {
+      // Error saving data
+    }
+  }
+
   _onDone = () => {
+    try {
+      await AsyncStorage.setItem('@SMSForwarder:welcomeScreenDone', true);
+    } catch (error) {
+      // Error saving data
+    }
     this.setState({
       welcomeScreenFinished: true,
     });

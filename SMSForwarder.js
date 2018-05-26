@@ -12,7 +12,7 @@ import { FormLabel, FormInput, Input, Button } from 'react-native-elements';
 
 export default class SMSForwarder extends Component {
   state = {
-    phoneNo: '+61422051426',
+    phoneNo: '',
     message: '',
     email: '',
     subscription: null,
@@ -63,9 +63,12 @@ export default class SMSForwarder extends Component {
   };
 
   isValidMessage = message => {
-    if (message.originatingAddress === this.state.phoneNo) {
+    if (
+      message.originatingAddress === this.state.phoneNo ||
+      this.state.phoneNo === ''
+    ) {
       const patt = new RegExp(this.state.message, 'gi');
-      if (patt.test(message.body)) {
+      if (patt.test(message.body) || this.state.message === '') {
         return true;
       }
     }
@@ -73,13 +76,17 @@ export default class SMSForwarder extends Component {
   };
 
   saveForwarder = () => {
-    Alert.alert('Notification', 'Forwarder is now enabled!');
-    const subscription = SmsListener.addListener(message => {
-      if (this.isValidMessage(message)) {
-        this.sendEmail(message, this.state.email);
-      }
-    });
-    this.setState({ subscription });
+    if (this.state.email !== '') {
+      Alert.alert('Notification', 'Forwarder is now enabled!');
+      const subscription = SmsListener.addListener(message => {
+        if (this.isValidMessage(message)) {
+          this.sendEmail(message, this.state.email);
+        }
+      });
+      this.setState({ subscription });
+    } else {
+      Alert.alert('Error', 'Destination email cannot be empty!');
+    }
   };
 
   stopForwarding = () => {
@@ -103,7 +110,7 @@ export default class SMSForwarder extends Component {
         <Text>Forwarder {subscription !== null ? 'ON' : 'OFF'}</Text>
         <Text style={styles.filter}>Filter SMS By</Text>
         <FormInput
-          placeholder="Phone No"
+          placeholder="From Phone No (eg: +6141234567)"
           label="Phone No (Int'l Format, eg: +6141234567)"
           onChangeText={phoneNo => this.setState({ phoneNo })}
           value={phoneNo}
