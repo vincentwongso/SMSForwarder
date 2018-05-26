@@ -8,6 +8,8 @@ import {
   Alert,
 } from 'react-native';
 import SmsListener from 'react-native-android-sms-listener';
+import KeepAwake from 'react-native-keep-awake';
+
 import { FormLabel, FormInput, Input, Button } from 'react-native-elements';
 
 export default class SMSForwarder extends Component {
@@ -85,6 +87,7 @@ export default class SMSForwarder extends Component {
         }
       });
       this.setState({ subscription });
+      KeepAwake.activate();
     } else {
       Alert.alert('Error', 'Destination email cannot be empty!');
     }
@@ -99,6 +102,7 @@ export default class SMSForwarder extends Component {
     this.setState({
       subscription: null,
     });
+    KeepAwake.deactivate();
   };
 
   render() {

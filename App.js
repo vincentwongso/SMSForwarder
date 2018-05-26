@@ -1,6 +1,7 @@
 import React from 'react';
 import { StyleSheet, AsyncStorage } from 'react-native';
 import AppIntroSlider from 'react-native-app-intro-slider';
+
 import SMSForwarder from './SMSForwarder';
 
 const styles = StyleSheet.create({
@@ -22,7 +23,7 @@ const slides = [
   {
     key: 'somethun-dos',
     title: 'HOW IT WORKS',
-    text: 'Simply specify your destination email and your filter (origination phone no and message) that you want to forward. Then click save and keep the app open.',
+    text: '1. Specify email destination.\n2. Specify sms filter (phone no & message body)\n3. Save and make sure your app always open.',
     image: require('./assets/2.jpg'),
     imageStyle: styles.image,
     backgroundColor: '#febe29',
