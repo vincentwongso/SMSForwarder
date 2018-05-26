@@ -6,6 +6,7 @@ import {
   View,
   PermissionsAndroid,
   Alert,
+  ToastAndroid,
 } from 'react-native';
 import SmsListener from 'react-native-android-sms-listener';
 import KeepAwake from 'react-native-keep-awake';
@@ -38,6 +39,14 @@ export default class SMSForwarder extends Component {
     }
   }
 
+  notifySuccess = from => {
+    ToastAndroid.showWithGravity(
+      `SMS successfully forwarded to: ${from}`,
+      ToastAndroid.LONG,
+      ToastAndroid.TOP
+    );
+  };
+
   sendEmail = async (message, destinationEmail) => {
     const url = 'https://frozen-falls-13030.herokuapp.com/mail';
     const headers = new Headers({
@@ -57,7 +66,10 @@ export default class SMSForwarder extends Component {
     try {
       const response = await fetch(url, config);
       const result = await response.json();
-      console.log(result);
+      if (result && result.success) {
+        console.log(result);
+        this.notifySuccess(message.originatingAddress);
+      }
     } catch (e) {
       console.error(e);
       Alert.alert('Notification', 'Failed delivering sms!');
@@ -153,6 +165,9 @@ export default class SMSForwarder extends Component {
               onPress={this.stopForwarding}
             />}
         </View>
+        <Text style={styles.info}>
+          Forwarder will not work if this app is in the background.
+        </Text>
       </View>
     );
   }
@@ -188,5 +203,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     width: '100%',
     marginTop: 20,
+  },
+  info: {
+    textAlign: 'left',
+    fontSize: 12,
+    color: '#CCCCCC',
+    marginTop: 10,
   },
 });
