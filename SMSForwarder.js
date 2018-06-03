@@ -3,15 +3,22 @@ import {
   Platform,
   StyleSheet,
   Text,
+  ScrollView,
   View,
   PermissionsAndroid,
   Alert,
   ToastAndroid,
+  TouchableHighlight,
+  AsyncStorage,
+  Linking
 } from 'react-native';
 import SmsListener from 'react-native-android-sms-listener';
 import KeepAwake from 'react-native-keep-awake';
+import { Input, Button } from 'react-native-elements';
+import { AdMobBanner } from 'react-native-admob';
 
-import { FormLabel, FormInput, Input, Button } from 'react-native-elements';
+import ErrorBoundary from './ErrorBoundary';
+import SMTPSettings from './SMTPSettings';
 
 export default class SMSForwarder extends Component {
   state = {
@@ -19,6 +26,8 @@ export default class SMSForwarder extends Component {
     message: '',
     email: '',
     subscription: null,
+    showModal: false,
+    showHelpModal: false,
   };
   async componentDidMount() {
     try {
@@ -41,13 +50,14 @@ export default class SMSForwarder extends Component {
 
   notifySuccess = from => {
     ToastAndroid.showWithGravity(
-      `SMS successfully forwarded to: ${from}`,
+      `SMS from ${from} successfully forwarded to ${this.state.email}`,
       ToastAndroid.LONG,
       ToastAndroid.TOP
     );
   };
 
   sendEmail = async (message, destinationEmail) => {
+    const smtp = await AsyncStorage.getItem('@SMSForwarder:smtpSettings');
     const url = 'https://frozen-falls-13030.herokuapp.com/mail';
     const headers = new Headers({
       Accept: 'application/json',
@@ -61,6 +71,7 @@ export default class SMSForwarder extends Component {
         subject: `Forwarding SMS From: ${message.originatingAddress}`,
         body: message.body,
         destination: destinationEmail,
+        smtp: smtp ? JSON.parse(smtp) : null,
       }),
     };
     try {
@@ -117,58 +128,99 @@ export default class SMSForwarder extends Component {
     KeepAwake.deactivate();
   };
 
+  showSmtpSettings = () => {
+    this.setState({
+      showModal: true,
+    });
+  };
+
+  closeSmtpSettings = () => {
+    this.setState({
+      showModal: false,
+    });
+  };
+
+  toggleHelpModal = visible => {
+    this.setState({
+      showHelpModal: visible,
+    });
+  };
+
   render() {
-    const { phoneNo, message, email, subscription } = this.state;
+    const { phoneNo, message, email, subscription, showModal } = this.state;
     return (
-      <View style={styles.container}>
-        <Text style={styles.welcome}>
-          Welcome to SMS Forwarder!
-        </Text>
-        <Text>Forwarder {subscription !== null ? 'ON' : 'OFF'}</Text>
-        <Text style={styles.filter}>Filter SMS By</Text>
-        <FormInput
-          placeholder="From Phone No (eg: +6141234567)"
-          label="Phone No (Int'l Format, eg: +6141234567)"
-          onChangeText={phoneNo => this.setState({ phoneNo })}
-          value={phoneNo}
-        />
-        <FormInput
-          placeholder="Message Contains"
-          label="Message Contains"
-          onChangeText={message => this.setState({ message })}
-          value={message}
-        />
-        <Text style={styles.filter}>Destination Email</Text>
-        <FormInput
-          placeholder="Email"
-          label="Email"
-          onChangeText={email => this.setState({ email })}
-          value={email}
-        />
-        <View style={styles.buttonsContainer}>
-          {!subscription &&
-            <Button
-              raised
-              title="SAVE FORWARDER"
-              buttonStyle={{
-                backgroundColor: 'rgba(111, 202, 186, 1)',
-              }}
-              onPress={this.saveForwarder}
-            />}
-          {subscription &&
-            <Button
-              raised
-              title="STOP FORWARDER"
-              buttonStyle={{
-                backgroundColor: 'rgba(92, 99,216, 1)',
-              }}
-              onPress={this.stopForwarding}
-            />}
+      <ScrollView>
+        <View style={styles.container}>
+          <ErrorBoundary>
+            <AdMobBanner
+              adSize="banner"
+              adUnitID="ca-app-pub-2865790332277864/7814843869"
+              testDevices={[AdMobBanner.simulatorId]}
+            />
+          </ErrorBoundary>
+          <Text style={styles.welcome}>
+            SMS Forwarder
+          </Text>
+          <Text style={styles.filter}>Specify Message Filter</Text>
+          <Input
+            inputStyle={{ fontSize: 12 }}
+            placeholder="From Phone No (eg: +6141234567)"
+            onChangeText={phoneNo => this.setState({ phoneNo })}
+            value={phoneNo}
+            autoFocus={true}
+          />
+          <Input
+            inputStyle={{ fontSize: 12 }}
+            placeholder="Message Contains"
+            onChangeText={message => this.setState({ message })}
+            value={message}
+          />
+          <Text style={styles.filter}>Specify Destination Email</Text>
+          <Input
+            inputStyle={{ fontSize: 12 }}
+            placeholder="Email"
+            onChangeText={email => this.setState({ email })}
+            value={email}
+          />
+          <View style={styles.buttonsContainer}>
+            {!subscription &&
+              <Button
+                raised
+                title="SWITCH ON"
+                buttonStyle={{
+                  backgroundColor: 'rgba(111, 202, 186, 1)',
+                  borderColor: 'transparent',
+                }}
+                onPress={this.saveForwarder}
+              />}
+            {subscription &&
+              <Button
+                raised
+                title="SWITCH OFF"
+                buttonStyle={{
+                  backgroundColor: 'rgba(199, 43, 98, 1)',
+                  borderColor: 'transparent',
+                }}
+                onPress={this.stopForwarding}
+              />}
+          </View>
+          <Text style={styles.info}>
+            Forwarder will not work if it's in the background.
+          </Text>
+          <View style={styles.helperLink}>
+            <TouchableHighlight onPress={this.showSmtpSettings}>
+              <Text style={{ color: 'blue' }}>SMTP Settings</Text>
+            </TouchableHighlight>
+            <SMTPSettings showModal={showModal} close={this.closeSmtpSettings} />
+            <TouchableHighlight
+              onPress={() => Linking.openURL('mailto:support@smsforwarder.app')}
+              style={{ marginLeft: 60 }}
+            >
+              <Text style={{ color: 'blue' }}>Help & Support</Text>
+            </TouchableHighlight>
+          </View>
         </View>
-        <Text style={styles.info}>
-          Forwarder will not work if this app is in the background.
-        </Text>
-      </View>
+      </ScrollView>
     );
   }
 }
@@ -176,7 +228,9 @@ export default class SMSForwarder extends Component {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+    padding: 10,
+    flexDirection: 'column',
+    justifyContent: 'flex-start',
     alignItems: 'center',
     backgroundColor: '#F5FCFF',
   },
@@ -184,6 +238,7 @@ const styles = StyleSheet.create({
     fontSize: 20,
     textAlign: 'center',
     margin: 10,
+    marginBottom: 40,
   },
   instructions: {
     textAlign: 'center',
@@ -193,6 +248,7 @@ const styles = StyleSheet.create({
   filter: {
     textAlign: 'left',
     margin: 10,
+    marginTop: 25,
     fontWeight: 'bold',
   },
   phoneNoLabel: {
@@ -202,12 +258,19 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     width: '100%',
-    marginTop: 20,
+    marginTop: 30,
   },
   info: {
     textAlign: 'left',
     fontSize: 12,
     color: '#CCCCCC',
     marginTop: 10,
+  },
+  helperLink: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'flex-start',
+    alignItems: 'flex-end',
+    marginTop: 30
   },
 });
